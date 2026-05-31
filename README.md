@@ -1,4 +1,15 @@
+---
+title: SurvoCCTV
+emoji: 📹
+colorFrom: gray
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # SurvoCCTV - AI-Powered Store Intelligence System
+
 
 SurvoCCTV is an end-to-end computer vision and analytics platform that translates raw CCTV video footage and POS transaction logs into actionable store intelligence. The system features a real-time tracking pipeline, a rule-based anomaly detector, and a modern, high-performance glassmorphic dark-themed dashboard.
 
