@@ -21,11 +21,12 @@ COPY backend /app/backend
 COPY frontend /app/frontend
 COPY data /app/data
 
-# Expose API port
+# Expose API ports
 EXPOSE 8000
+EXPOSE 7860
 
 # Headless configuration for OpenCV
 ENV QT_QPA_PLATFORM=offscreen
 
-# Run FastAPI app
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run FastAPI app (reads $PORT or defaults to 8000)
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
