@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SurvoCCTV - Live Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-brain logo-icon"></i>
+                <div class="logo-text">
+                    <span class="logo-title">SurvoCCTV</span>
+                    <span class="logo-sub">Store Intelligence</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="overview">
+                    <i class="fa-solid fa-chart-line"></i> Overview
+                </a>
+                <a href="#" class="nav-item" data-tab="cameras">
+                    <i class="fa-solid fa-video"></i> CCTV Feeds
+                </a>
+                <a href="#" class="nav-item" data-tab="anomalies">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Anomalies
+                    <span class="badge badge-red" id="sidebar-alert-badge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="heatmap">
+                    <i class="fa-solid fa-fire-flame-curved"></i> Heatmaps
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator online" id="pipeline-status-dot"></div>
+                    <span id="pipeline-status-text">Pipeline: Online</span>
+                </div>
+                <div class="control-buttons">
+                    <button class="btn btn-sm btn-outline-danger" id="btn-stop-pipeline" title="Stop YOLO processing">
+                        <i class="fa-solid fa-stop"></i> Stop
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" id="btn-start-pipeline" title="Start YOLO processing" style="display:none;">
+                        <i class="fa-solid fa-play"></i> Start
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-title">
+                    <h1 id="page-title">Live Store Overview</h1>
+                    <p class="text-muted" id="page-subtitle">Real-time occupancy tracking and behavior profiling</p>
+                </div>
+                <div class="header-controls">
+                    <div class="sound-toggle" id="btn-sound-toggle">
+                        <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                        <span>Alert Chime: ON</span>
+                    </div>
+                    <div class="current-time">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="live-clock">21:00:00</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content tabs -->
+            <div class="tab-content" id="tab-overview">
+                <!-- KPI Ribbon -->
+                <section class="kpi-grid">
+                    <div class="kpi-card glow-cyan">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Current Occupancy</span>
+                            <span class="kpi-value" id="kpi-occupancy">0</span>
+                            <span class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> Live Tracking</span>
+                        </div>
+                        <div class="kpi-icon-wrapper cyan">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-card glow-blue">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Visits Today</span>
+                            <span class="kpi-value" id="kpi-total-customers">0</span>
+                            <span class="kpi-trend"><i class="fa-solid fa-calendar-day"></i> Cumulative</span>
+                        </div>
+                        <div class="kpi-icon-wrapper blue">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-card glow-purple">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Avg Store Dwell Time</span>
+                            <span class="kpi-value" id="kpi-dwell">0s</span>
+                            <span class="kpi-trend"><i class="fa-solid fa-hourglass-half"></i> Retrospective</span>
+                        </div>
+                        <div class="kpi-icon-wrapper purple">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-card glow-red" id="kpi-alerts-card">
+                        <div class="kpi-info">
+                            <span class="kpi-label">Active Anomalies</span>
+                            <span class="kpi-value" id="kpi-alerts">0</span>
+                            <span class="kpi-trend trend-down" id="kpi-alerts-trend">No active alerts</span>
+                        </div>
+                        <div class="kpi-icon-wrapper red" id="kpi-alerts-icon-wrapper">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Overview Layout Grid -->
+                <section class="overview-grid">
+                    <!-- Top Video Streams (First 2 cameras: Entrance & Cashier) -->
+                    <div class="panel streams-panel">
+                        <div class="panel-header">
+                            <h2>Primary Camera Streams</h2>
+                            <span class="badge badge-outline">Live YOLO Feed</span>
+                        </div>
+                        <div class="overview-streams">
+                            <div class="cam-box-mini">
+                                <div class="cam-header">
+                                    <span class="cam-name">CAM 1: Entrance / Exit</span>
+                                    <span class="cam-live-indicator"><i class="fa-solid fa-circle"></i> Live</span>
+                                </div>
+                                <div class="stream-img-container">
+                                    <img src="/api/cameras/CAM 1/stream" class="stream-img" alt="CAM 1 Stream">
+                                </div>
+                            </div>
+                            <div class="cam-box-mini">
+                                <div class="cam-header">
+                                    <span class="cam-name">CAM 4: Cashier 1 Queue</span>
+                                    <span class="cam-live-indicator"><i class="fa-solid fa-circle"></i> Live</span>
+                                </div>
+                                <div class="stream-img-container">
+                                    <img src="/api/cameras/CAM 4/stream" class="stream-img" alt="CAM 4 Stream">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Occupancy Graph -->
+                    <div class="panel graph-panel">
+                        <div class="panel-header">
+                            <h2>Live Occupancy Curve</h2>
+                            <div class="chart-legend">
+                                <span class="legend-dot cyan"></span> Occupancy
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="occupancyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Real-Time Event Log -->
+                    <div class="panel log-panel">
+                        <div class="panel-header">
+                            <h2>Real-Time Store Telemetry Events</h2>
+                            <i class="fa-solid fa-rotate-right spinner" id="event-spinner" style="display:none;"></i>
+                        </div>
+                        <div class="log-table-container">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Camera</th>
+                                        <th>Event Type</th>
+                                        <th>Zone</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="event-log-rows">
+                                    <!-- Populated dynamically -->
+                                    <tr id="empty-event-row">
+                                        <td colspan="5" class="text-center text-muted">Awaiting incoming telemetry streams...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Store Zone Occupancy Breakdown -->
+                    <div class="panel break-panel">
+                        <div class="panel-header">
+                            <h2>Traffic Distribution</h2>
+                        </div>
+                        <div class="chart-container-donut">
+                            <canvas id="trafficDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Cameras -->
+            <div class="tab-content" id="tab-cameras" style="display:none;">
+                <section class="cameras-full-grid">
+                    <!-- CAM 1 -->
+                    <div class="cam-card">
+                        <div class="cam-card-header">
+                            <div>
+                                <h3>CAM 1 - Entrance & Exit Gate</h3>
+                                <p class="text-muted">Resolution: 1920x1080 | FPS: 3.0</p>
+                            </div>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div class="cam-card-body">
+                            <img src="/api/cameras/CAM 1/stream" class="cam-card-img" alt="CAM 1 Stream">
+                        </div>
+                    </div>
+                    <!-- CAM 2 -->
+                    <div class="cam-card">
+                        <div class="cam-card-header">
+                            <div>
+                                <h3>CAM 2 - Aisle 1 (Cosmetics)</h3>
+                                <p class="text-muted">Resolution: 1920x1080 | FPS: 3.0</p>
+                            </div>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div class="cam-card-body">
+                            <img src="/api/cameras/CAM 2/stream" class="cam-card-img" alt="CAM 2 Stream">
+                        </div>
+                    </div>
+                    <!-- CAM 3 -->
+                    <div class="cam-card">
+                        <div class="cam-card-header">
+                            <div>
+                                <h3>CAM 3 - Aisle 2 (Skincare)</h3>
+                                <p class="text-muted">Resolution: 1920x1080 | FPS: 3.0</p>
+                            </div>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div class="cam-card-body">
+                            <img src="/api/cameras/CAM 3/stream" class="cam-card-img" alt="CAM 3 Stream">
+                        </div>
+                    </div>
+                    <!-- CAM 4 -->
+                    <div class="cam-card">
+                        <div class="cam-card-header">
+                            <div>
+                                <h3>CAM 4 - Cashier Desk 1 & Queue</h3>
+                                <p class="text-muted">Resolution: 1920x1080 | FPS: 3.0</p>
+                            </div>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div class="cam-card-body">
+                            <img src="/api/cameras/CAM 4/stream" class="cam-card-img" alt="CAM 4 Stream">
+                        </div>
+                    </div>
+                    <!-- CAM 5 -->
+                    <div class="cam-card">
+                        <div class="cam-card-header">
+                            <div>
+                                <h3>CAM 5 - Cashier Desk 2 & Queue</h3>
+                                <p class="text-muted">Resolution: 1920x1080 | FPS: 3.0</p>
+                            </div>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div class="cam-card-body">
+                            <img src="/api/cameras/CAM 5/stream" class="cam-card-img" alt="CAM 5 Stream">
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Anomalies -->
+            <div class="tab-content" id="tab-anomalies" style="display:none;">
+                <section class="anomalies-section">
+                    <div class="panel width-100">
+                        <div class="panel-header">
+                            <h2>Anomaly Alerts History</h2>
+                            <span class="badge badge-red" id="alerts-count-badge">0 Active Alerts</span>
+                        </div>
+                        <div class="log-table-container">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Camera ID</th>
+                                        <th>Track ID</th>
+                                        <th>Alert Type</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="anomalies-log-rows">
+                                    <tr id="empty-anomaly-row">
+                                        <td colspan="7" class="text-center text-muted">No anomalies detected. Store operations running smoothly.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Heatmaps -->
+            <div class="tab-content" id="tab-heatmap" style="display:none;">
+                <section class="heatmap-section">
+                    <div class="panel width-100">
+                        <div class="panel-header">
+                            <h2>Customer Traffic Heatmap Analysis</h2>
+                            <div class="heatmap-controls">
+                                <label for="heatmap-cam-select">Select Camera Feed:</label>
+                                <select id="heatmap-cam-select" class="select-input">
+                                    <option value="CAM 1">CAM 1: Entrance / Exit</option>
+                                    <option value="CAM 2">CAM 2: Aisle 1 (Cosmetics)</option>
+                                    <option value="CAM 3">CAM 3: Aisle 2 (Skincare)</option>
+                                    <option value="CAM 4">CAM 4: Cashier 1 Queue</option>
+                                    <option value="CAM 5">CAM 5: Cashier 2 Queue</option>
+                                </select>
+                                <button class="btn btn-primary" id="btn-refresh-heatmap">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Reload Heatmap
+                                </button>
+                            </div>
+                        </div>
+                        <div class="heatmap-canvas-container">
+                            <!-- We will overlay a scatter plot or canvas representing spatial positions -->
+                            <div class="heatmap-visual-box">
+                                <canvas id="heatmapCanvas" width="960" height="540"></canvas>
+                                <div class="heatmap-legend">
+                                    <span>High Traffic (Hot)</span>
+                                    <div class="heatmap-gradient-bar"></div>
+                                    <span>Low Traffic (Cold)</span>
+                                </div>
+                            </div>
+                            <div class="heatmap-details-panel">
+                                <h3>Spatial Intelligence Stats</h3>
+                                <p class="text-muted">Aggregating historical coordinate track points to visualize congestion zones.</p>
+                                <ul class="heatmap-stats-list">
+                                    <li>Total tracked points: <strong id="heatmap-total-points">0</strong></li>
+                                    <li>Hot Spot Area: <strong id="heatmap-hot-spot">Retrieving...</strong></li>
+                                    <li>Dwell Congestion Index: <strong id="heatmap-congestion">Low</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Alert Chime Audio -->
+    <audio id="alert-chime" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav" preload="auto"></audio>
+
+    <!-- Floating Alert Notifications -->
+    <div class="notification-container" id="notification-area"></div>
+
+    <!-- Custom JS -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

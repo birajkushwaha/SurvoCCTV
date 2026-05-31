@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# YOLO weights
+*.pt
+
+# Scratch & Helper Utility scripts
+check_gpu.py
+extract.py
+inspect_videos.py
+read_pdf.py
+read_excel.py
+read_excel_detail.py
+copy_resources.py
+verify_api.py
+pdf_text.txt
+excel_text.txt
+
+# Dataset & Video Clips (Mandatory Exclusions)
+data/CCTV Footage/
+data/POS_Transactions.csv
+data/Store_Layout.xlsx
+data/Evaluation_Framework.pdf
+
+# Root duplicate files/directories (Must not be uploaded)
+Assessment  Evaluation Framework*.pdf
+Brigade Road - Store layout*.xlsx
+Brigade_Bangalore_10_April_26*.csv
+CCTV Footage-*/
+CCTV Footage-20260529T160731Z-3-00144614ea/
+
+# Local Databases
+data/*.db
+data/*.db-journal
+
+# VS Code config
+.vscode/

@@ -1,0 +1,31 @@
+FROM python:3.12-slim
+
+# Install system dependencies for OpenCV headless execution
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install project dependencies
+RUN pip install --no-cache-dir \
+    fastapi \
+    "uvicorn[standard]" \
+    ultralytics \
+    opencv-python-headless \
+    jinja2
+
+# Copy code modules
+COPY backend /app/backend
+COPY frontend /app/frontend
+COPY data /app/data
+
+# Expose API port
+EXPOSE 8000
+
+# Headless configuration for OpenCV
+ENV QT_QPA_PLATFORM=offscreen
+
+# Run FastAPI app
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
