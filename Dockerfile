@@ -28,5 +28,5 @@ EXPOSE 7860
 # Headless configuration for OpenCV
 ENV QT_QPA_PLATFORM=offscreen
 
-# Run FastAPI app (reads $PORT or defaults to 8000)
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run FastAPI app (reads $PORT or defaults to 7860)
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]
